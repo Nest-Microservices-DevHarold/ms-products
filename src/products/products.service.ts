@@ -1,15 +1,26 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class ProductsService {
+  
+  private readonly logger = new Logger('ProductsService');
+  
+  constructor(private prisma: PrismaService) {}
+
   create(createProductDto: CreateProductDto) {
-    return 'This action adds a new product';
+    const product = this.prisma.product.create({
+      data: createProductDto
+    })
+
+    return product;
   }
 
   findAll() {
-    return `This action returns all products`;
+    const getAllProducts = this.prisma.product.findMany();
+    return getAllProducts;
   }
 
   findOne(id: number) {
