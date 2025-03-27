@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { PrismaService } from 'src/prisma.service';
@@ -6,60 +6,106 @@ import { PaginationDto } from 'src/common/dto';
 
 @Injectable()
 export class ProductsService {
-  
   private readonly logger = new Logger('ProductsService');
-  
+
   constructor(private prisma: PrismaService) {}
 
   create(createProductDto: CreateProductDto) {
     const product = this.prisma.product.create({
-      data: createProductDto
-    })
+      data: createProductDto,
+    });
 
     return product;
   }
 
   async findAll(paginationDto: PaginationDto) {
-  const { page, limit } = paginationDto;
+    const { page = 1, limit = 10 } = paginationDto;
 
-  // Si no se envían `page` ni `limit`, retornar todos los productos
-  if (!page || !limit) {
+    //Example 1
+    // Si no se envían `page` ni `limit`, retornar todos los productos
+    
+    /** if (!page || !limit) {
+      return {
+        data: await this.prisma.product.findMany(),
+        meta: {
+          total: await this.prisma.product.count(),
+          page: null,
+          lastPage: null,
+        },
+      };
+    }
+
+    const totalPages = await this.prisma.product.count();
+    const lastPage = Math.ceil(totalPages / limit);
+
     return {
-      data: await this.prisma.product.findMany(),
+      data: await this.prisma.product.findMany({
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
       meta: {
-        total: await this.prisma.product.count(),
-        page: null,
-        lastPage: null,
+        total: totalPages,
+        page: page,
+        lastPage: lastPage,
       },
     };
-  }
+    */
+   
+    //Example 2
+    const totalProducts = await this.prisma.product.count();
+    const lastPage = Math.ceil(totalProducts / limit);
 
-  const totalPages = await this.prisma.product.count();
-  const lastPage = Math.ceil(totalPages / limit);
-
-  return {
-    data: await this.prisma.product.findMany({
+    const existingPage = await this.prisma.product.findMany({
       skip: (page - 1) * limit,
       take: limit,
-    }),
-    meta: {
-      total: totalPages,
-      page: page,
-      lastPage: lastPage,
-    },
-  };
-}
+    })
+    return {
+      data : existingPage.length > 0 ? existingPage : 'No products found',
+      meta: {
+        page: page,
+        total: totalProducts,
+        lastPage: lastPage,
+      }
+    }
 
 
-  findOne(id: number) {
-    return `This action returns a #${id} product`;
   }
 
-  update(id: number, updateProductDto: UpdateProductDto) {
-    return `This action updates a #${id} product`;
+  async findOne(id: number) {
+    const product = await this.prisma.product.findFirst({
+      where: {
+        id: id,
+      }
+    });
+
+    if (!product) {
+      throw new NotFoundException(`Product with id #${id} not found`);
+    }
+    return product;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} product`;
+  async update(id: number, updateProductDto: UpdateProductDto) {
+    if (!updateProductDto) {
+      throw new BadRequestException('No data to update');
+    }
+
+    await this.findOne(id);
+
+    return this.prisma.product.update({
+      where: {
+        id: id,
+      },
+      data: updateProductDto,
+    })
+  }
+
+  async remove(id: number) {
+    await this.findOne(id);
+
+    return this.prisma.product.delete({
+      where: {
+        id: id,
+      },
+    });
   }
 }
