@@ -92,6 +92,9 @@ export class ProductsService {
   }
 
   async update(id: number, updateProductDto: UpdateProductDto) {
+    // Aqui puedo separar, el id de la data a modificar
+    const { id: _, ...data } = updateProductDto;
+
     if (!updateProductDto) {
       throw new BadRequestException('No data to update');
     }
@@ -102,7 +105,7 @@ export class ProductsService {
       where: {
         id: id,
       },
-      data: updateProductDto,
+      data: data,
     });
   }
 
