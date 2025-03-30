@@ -45,4 +45,4 @@ INSERT INTO Product (name, price, createdAt, updatedAt) VALUES
 ('Cable DisplayPort', 10.0, 1709049245243, 1709049245243),
 ('Cable de red Ethernet', 10.0, 1709049250141, 1709049250141),
 ('Bolsa para laptop', 25.0, 1709049255042, 1709049255042),
-('Almohadilla para mouse', 15.0, 1709049259956, 1709049259956);
+('Almohadilla para mouse', 15.0, 1709049259956, 1709049259956); 
